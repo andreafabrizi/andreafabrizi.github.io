@@ -83,7 +83,6 @@
         </div>
         <button class="btn" id="calcola">Calcola proporzioni</button>
       </div>
-      <p class="hint" style="margin-top:8px">Le proporzioni usano la ricetta di riferimento di GialloZafferano: 70 g basilico → 70 g olio, 50 g Parmigiano, 30 g Pecorino, 30 g pinoli, 2 spicchi d'aglio, 3 g sale.</p>
     </section>
 
     <section style="margin-top:16px" class="card" aria-live="polite" aria-atomic="true">
@@ -96,26 +95,18 @@
       <div class="footer" id="rende"></div>
     </section>
 
-    <section style="margin-top:12px" class="muted">
-      <p style="margin:0">Suggerimenti rapidi: usa foglie piccole, lavate e ben asciugate; pesta o frulla a impulsi brevi per non scaldare il basilico. Conserva coperto d'olio.</p>
-    </section>
-
-    <section class="footer" style="margin-top:18px">
-      <p style="margin:0">Fonte proporzioni: ricetta "Pesto alla Genovese" di GialloZafferano.
-      Questo strumento non è affiliato con i marchi citati.</p>
-    </section>
   </div>
 
   <script>
     const BASE = {
-      basilico: 70,
-      olio: 70,
-      parmigiano: 50,
-      pecorino: 30,
-      pinoli: 30,
-      aglio_spicchi: 2,
+      basilico: 170,
+      olio: 170,
+      parmigiano: 170,
+      pecorino: 0,
+      pinoli: 75,
+      aglio_spicchi: 1,
       sale: 3,
-      resa_pesto: 260
+      resa_pesto: 630
     };
 
     const $ = (sel) => document.querySelector(sel);
@@ -171,7 +162,7 @@
       const aglioCard = document.createElement('div');
       aglioCard.className = 'item';
       const spicchiT = spicchi < 0.75 ? '\u22480.5' : fmt(spicchi, true);
-      aglioCard.innerHTML = `<h3>Aglio (di Vessalico, se possibile)</h3><p><span class="accent">${spicchiT}</span> spicchi</p>`;
+      aglioCard.innerHTML = `<h3>Aglio</h3><p><span class="accent">${spicchiT}</span> spicchi</p>`;
       grid.appendChild(aglioCard);
 
       if(mostraNote){
