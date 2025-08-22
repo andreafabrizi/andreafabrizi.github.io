@@ -115,14 +115,12 @@
     function calc(){
       const basilicoInput = parseFloat($('#basilico').value);
       const arrotonda = $('#arrotonda').checked;
-      const mostraNote = $('#mostraNote').checked;
 
       const grid = $('#lista');
       const note = $('#note');
       const rende = $('#rende');
 
       grid.innerHTML = '';
-      note.style.display = mostraNote ? 'block' : 'none';
       note.innerHTML = '';
 
       if(isNaN(basilicoInput) || basilicoInput <= 0){
@@ -161,25 +159,12 @@
       aglioCard.innerHTML = `<h3>Aglio</h3><p><span class="accent">${spicchiT}</span> spicchi</p>`;
       grid.appendChild(aglioCard);
 
-      if(mostraNote){
-        const consigli = [];
-        if(basilicoInput < 40){
-          consigli.push('Quantità piccola: frulla a impulsi e raffredda le lame (o usa il mortaio) per non scaldare il basilico.');
-        }
-        if(pinoli / parmigianoTotale < 0.3){
-          consigli.push('Per un gusto più marcato di frutta secca puoi aumentare i pinoli del 10–15% senza stravolgere la ricetta.');
-        }
-        consigli.push('Regola l\'aglio a piacere: la ricetta di riferimento prevede 2 spicchi ogni 70 g di basilico.');
-        note.innerHTML = consigli.map(c=>`• ${c}`).join('<br>');
-      }
-
       rende.textContent = `Resa stimata: circa ${fmt(resa, true)} g di pesto finito.`;
     }
 
     $('#calcola').addEventListener('click', calc);
     $('#basilico').addEventListener('input', calc);
     $('#arrotonda').addEventListener('change', calc);
-    $('#mostraNote').addEventListener('change', calc);
 
     document.querySelectorAll('[data-quick]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
