@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Calcolatore Pesto alla Genovese</title>
+  <style>
+    :root{
+      --bg:#0f172a;
+      --panel:#111827;
+      --muted:#334155;
+      --text:#e5e7eb;
+      --accent:#22c55e;
+      --accent-2:#2dd4bf;
+      --danger:#ef4444;
+    }
+    html,body{margin:0;background:var(--bg);color:var(--text);font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";}
+    .container{max-width:720px;margin:0 auto;padding:24px;}
+    header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+    h1{font-size:1.35rem;margin:0;line-height:1.2}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.06),rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.08);padding:16px;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,0.35)}
+    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .grow{flex:1}
+    label{font-size:.95rem;color:#cbd5e1;display:block;margin-bottom:6px}
+    input[type="number"], select{width:100%;box-sizing:border-box;background:#0b1220;color:var(--text);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:14px;font-size:1.05rem;outline:none}
+    input[type="number"]:focus, select:focus{border-color:var(--accent)}
+    .btn{appearance:none;border:none;background:var(--accent);color:#062a12;padding:12px 14px;border-radius:12px;font-weight:700;font-size:1rem}
+    .btn.secondary{background:#0b1220;color:#e2e8f0;border:1px solid rgba(255,255,255,0.12)}
+    .btn.ghost{background:transparent;color:#a7f3d0;border:1px solid rgba(45,212,191,0.35)}
+    .quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .mini{font-size:.9rem;padding:8px 10px;border-radius:999px;background:rgba(34,197,94,0.1);color:#bbf7d0;border:1px solid rgba(34,197,94,0.25)}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .item{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:12px 14px;border-radius:12px}
+    .item h3{margin:0 0 4px 0;font-size:1rem}
+    .item p{margin:0;color:#cbd5e1}
+    .muted{color:#94a3b8;font-size:.95rem}
+    .hint{font-size:.9rem;color:#94a3b8}
+    .footer{margin-top:12px;color:#9ca3af;font-size:.85rem}
+    .warning{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);color:#fecaca;padding:10px 12px;border-radius:10px;margin-top:10px}
+    .accent{color:#a7f3d0}
+    .title{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .switch{display:flex;align-items:center;gap:8px}
+    .switch input{accent-color:var(--accent)}
+    .kicker{color:#86efac;font-size:.85rem;letter-spacing:.06em;text-transform:uppercase}
+    @media (max-width:420px){
+      .grid{grid-template-columns:1fr}
+      h1{font-size:1.15rem}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+      <div>
+        <div class="kicker">Strumento da tasca</div>
+        <h1>Calcolatore Pesto alla Genovese</h1>
+      </div>
+    </header>
+
+    <section class="card" aria-label="input">
+      <div class="row">
+        <div class="grow">
+          <label for="basilico">Basilico disponibile (g)</label>
+          <input id="basilico" type="number" inputmode="decimal" min="5" max="3000" step="1" placeholder="es. 70" value="70" />
+          <div class="quick">
+            <button class="mini" data-quick="50">+50 g</button>
+            <button class="mini" data-quick="70">70 g (ricetta base)</button>
+            <button class="mini" data-quick="100">+100 g</button>
+            <button class="mini" data-quick="-10">-10 g</button>
+            <button class="mini" id="clear">azzera</button>
+          </div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <div class="switch">
+          <input id="arrotonda" type="checkbox" checked />
+          <label for="arrotonda" style="margin:0">Arrotonda ai grammi interi</label>
+        </div>
+        <div class="switch">
+          <input id="mostraNote" type="checkbox" />
+          <label for="mostraNote" style="margin:0">Mostra consigli</label>
+        </div>
+        <button class="btn" id="calcola">Calcola proporzioni</button>
+      </div>
+      <p class="hint" style="margin-top:8px">Le proporzioni usano la ricetta di riferimento di GialloZafferano: 70 g basilico → 70 g olio, 50 g Parmigiano, 30 g Pecorino, 30 g pinoli, 2 spicchi d'aglio, 3 g sale.</p>
+    </section>
+
+    <section style="margin-top:16px" class="card" aria-live="polite" aria-atomic="true">
+      <div class="title">
+        <h2 style="margin:0;font-size:1.1rem">Ingredienti calcolati</h2>
+        <button class="btn secondary" id="copia">Copia lista</button>
+      </div>
+      <div class="grid" id="lista"></div>
+      <div id="note" style="display:none;margin-top:10px" class="muted"></div>
+      <div class="footer" id="rende"></div>
+    </section>
+
+    <section style="margin-top:12px" class="muted">
+      <p style="margin:0">Suggerimenti rapidi: usa foglie piccole, lavate e ben asciugate; pesta o frulla a impulsi brevi per non scaldare il basilico. Conserva coperto d'olio.</p>
+    </section>
+
+    <section class="footer" style="margin-top:18px">
+      <p style="margin:0">Fonte proporzioni: ricetta "Pesto alla Genovese" di GialloZafferano.
+      Questo strumento non è affiliato con i marchi citati.</p>
+    </section>
+  </div>
+
+  <script>
+    const BASE = {
+      basilico: 70,
+      olio: 70,
+      parmigiano: 50,
+      pecorino: 30,
+      pinoli: 30,
+      aglio_spicchi: 2,
+      sale: 3,
+      resa_pesto: 260
+    };
+
+    const $ = (sel) => document.querySelector(sel);
+
+    function fmt(n, round=true){
+      if(round) return Math.round(n).toString();
+      return (Math.round(n*10)/10).toString().replace('.', ',');
+    }
+
+    function calc(){
+      const basilicoInput = parseFloat($('#basilico').value);
+      const arrotonda = $('#arrotonda').checked;
+      const mostraNote = $('#mostraNote').checked;
+
+      const grid = $('#lista');
+      const note = $('#note');
+      const rende = $('#rende');
+
+      grid.innerHTML = '';
+      note.style.display = mostraNote ? 'block' : 'none';
+      note.innerHTML = '';
+
+      if(isNaN(basilicoInput) || basilicoInput <= 0){
+        grid.innerHTML = `<div class="warning">Inserisci un numero valido di grammi di basilico.</div>`;
+        rende.textContent = '';
+        return;
+      }
+
+      const fattore = basilicoInput / BASE.basilico;
+
+      const olio = BASE.olio * fattore;
+      const parmigianoTotale = (BASE.parmigiano + BASE.pecorino) * fattore;
+      const pinoli = BASE.pinoli * fattore;
+      const sale = BASE.sale * fattore;
+      const spicchi = BASE.aglio_spicchi * fattore;
+      const resa = BASE.resa_pesto * fattore;
+
+      const items = [
+        {k:'Basilico', v: basilicoInput, u:'g'},
+        {k:'Olio extravergine d\'oliva', v: olio, u:'g (≈ ml)'},
+        {k:'Parmigiano Reggiano (totale)', v: parmigianoTotale, u:'g'},
+        {k:'Pinoli', v: pinoli, u:'g'},
+        {k:'Sale', v: sale, u:'g'},
+      ];
+
+      for(const it of items){
+        const card = document.createElement('div');
+        card.className = 'item';
+        card.innerHTML = `<h3>${it.k}</h3><p><span class="accent">${fmt(it.v, arrotonda)}</span> ${it.u}</p>`;
+        grid.appendChild(card);
+      }
+
+      const aglioCard = document.createElement('div');
+      aglioCard.className = 'item';
+      const spicchiT = spicchi < 0.75 ? '\u22480.5' : fmt(spicchi, true);
+      aglioCard.innerHTML = `<h3>Aglio (di Vessalico, se possibile)</h3><p><span class="accent">${spicchiT}</span> spicchi</p>`;
+      grid.appendChild(aglioCard);
+
+      if(mostraNote){
+        const consigli = [];
+        if(basilicoInput < 40){
+          consigli.push('Quantità piccola: frulla a impulsi e raffredda le lame (o usa il mortaio) per non scaldare il basilico.');
+        }
+        if(pinoli / parmigianoTotale < 0.3){
+          consigli.push('Per un gusto più marcato di frutta secca puoi aumentare i pinoli del 10–15% senza stravolgere la ricetta.');
+        }
+        consigli.push('Regola l\'aglio a piacere: la ricetta di riferimento prevede 2 spicchi ogni 70 g di basilico.');
+        note.innerHTML = consigli.map(c=>`• ${c}`).join('<br>');
+      }
+
+      rende.textContent = `Resa stimata: circa ${fmt(resa, true)} g di pesto finito.`;
+    }
+
+    $('#calcola').addEventListener('click', calc);
+    $('#basilico').addEventListener('input', calc);
+    $('#arrotonda').addEventListener('change', calc);
+    $('#mostraNote').addEventListener('change', calc);
+
+    document.querySelectorAll('[data-quick]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const val = btn.getAttribute('data-quick');
+        if(val === '70'){ $('#basilico').value = 70; }
+        else if(val === '-10'){ $('#basilico').value = Math.max(0, (parseFloat($('#basilico').value)||0) - 10); }
+        else{ $('#basilico').value = ((parseFloat($('#basilico').value)||0) + parseFloat(val)); }
+        calc();
+      });
+    });
+
+    $('#clear').addEventListener('click', ()=>{ $('#basilico').value=''; calc(); });
+
+    $('#copia').addEventListener('click', async ()=>{
+      const txt = document.getElementById('lista').innerText.replace(/\n\n/g,'\n');
+      try{ await navigator.clipboard.writeText(txt); 
+        const old = $('#copia').textContent; $('#copia').textContent = 'Copiato!';
+        setTimeout(()=>$('#copia').textContent = old, 1200);
+      }catch(e){ alert('Non sono riuscito a copiare. Seleziona e copia manualmente.'); }
+    });
+
+    calc();
+  </script>
+</body>
+</html>
