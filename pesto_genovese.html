@@ -136,6 +136,7 @@
       const sale = BASE.sale * fattore;
       const spicchi = BASE.aglio_spicchi * fattore;
       const resa = BASE.resa_pesto * fattore;
+      const acqua = basilicoInput * 0.8;
 
       const items = [
         {k:'Basilico', v: basilicoInput, u:'g'},
@@ -143,6 +144,7 @@
         {k:'Parmigiano Reggiano (totale)', v: parmigianoTotale, u:'g'},
         {k:'Pinoli', v: pinoli, u:'g'},
         {k:'Sale', v: sale, u:'g'},
+        {k:'Acqua', v: acqua, u:'ml'}
       ];
 
       for(const it of items){
@@ -158,7 +160,7 @@
       aglioCard.innerHTML = `<h3>Aglio</h3><p><span class="accent">${spicchiT}</span> spicchi</p>`;
       grid.appendChild(aglioCard);
 
-      rende.textContent = `Resa stimata: circa ${fmt(resa, true)} g di pesto finito.`;
+      rende.textContent = `Resa stimata: circa ${fmt(resa, true)} g di pesto finito. Ricorda di raffreddare mixer e basilico prima della preparazione.`;
     }
 
     $('#calcola').addEventListener('click', calc);
