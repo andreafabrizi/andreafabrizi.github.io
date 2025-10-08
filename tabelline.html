@@ -185,6 +185,24 @@
             background: rgba(126, 201, 163, 0.1);
         }
 
+        .player-name-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+            padding: 20px;
+            border-radius: 16px;
+            background: rgba(126, 201, 163, 0.12);
+        }
+
+        .player-name-group label {
+            font-weight: 600;
+        }
+
+        .player-name-group input {
+            width: clamp(200px, 45vw, 280px);
+        }
+
         .visually-hidden {
             position: absolute;
             width: 1px;
@@ -378,6 +396,45 @@
             justify-items: center;
         }
 
+        .scoreboard {
+            width: 100%;
+            padding: 20px;
+            border-radius: 18px;
+            background: rgba(126, 201, 163, 0.12);
+        }
+
+        .scoreboard h3 {
+            margin: 0 0 16px;
+            text-align: center;
+            font-size: 1.3rem;
+            color: var(--primary);
+        }
+
+        .scoreboard ol {
+            list-style: decimal;
+            padding-left: 24px;
+            margin: 0;
+            display: grid;
+            gap: 8px;
+        }
+
+        .scoreboard li {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .scoreboard li span {
+            font-weight: normal;
+            color: rgba(0, 0, 0, 0.65);
+        }
+
+        .scoreboard-empty {
+            margin: 12px 0 0;
+            text-align: center;
+            font-style: italic;
+            color: rgba(0, 0, 0, 0.55);
+        }
+
         .stats-grid {
             display: grid;
             gap: 16px;
@@ -482,6 +539,11 @@
                     </div>
                 </div>
 
+                <div class="player-name-group">
+                    <label for="player-name" id="player-name-label" data-i18n="playerNameLabel">Player name</label>
+                    <input type="text" id="player-name" maxlength="20" autocomplete="name" placeholder="Your name">
+                </div>
+
                 <button id="start-button" type="button" disabled>Start Game</button>
             </div>
         </section>
@@ -523,7 +585,7 @@
 
                 <form id="answer-form" class="answer-form" autocomplete="off">
                     <label for="answer-input" class="visually-hidden" data-i18n="answerLabel">Answer</label>
-                    <input type="text" id="answer-input" inputmode="numeric" autocomplete="off" aria-label="Your answer">
+                    <input type="text" id="answer-input" inputmode="numeric" autocomplete="off" aria-label="">
                     <button type="submit" id="submit-answer" data-i18n="submitLabel">Submit</button>
                 </form>
 
@@ -568,6 +630,11 @@
                         <div id="wrong-answers">0</div>
                     </div>
                 </div>
+                <div class="scoreboard">
+                    <h3 data-i18n="scoreboardTitle">Hall of Fame</h3>
+                    <ol id="scoreboard-list"></ol>
+                    <p class="scoreboard-empty hidden" id="scoreboard-empty" data-i18n="noScores">No scores yet. Be the first adventurer!</p>
+                </div>
                 <button id="play-again" type="button">Play Again</button>
             </div>
         </section>
@@ -587,6 +654,9 @@
         const SHINY_CHANCE = 0.1;
         const SHINY_MULTIPLIER = 2;
         const FEEDBACK_DURATION = 3200; // milliseconds
+        const SCOREBOARD_COOKIE = "mpaScoreboard";
+        const SCOREBOARD_LIMIT = 10;
+        const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // one year in seconds
 
         const translations = {
             en: {
@@ -605,12 +675,17 @@
                 streakLabel: "Streak",
                 shieldsLabel: "Shields",
                 mistakesLabel: "Wrong",
+                playerNameLabel: "Player name",
+                playerNamePlaceholder: "Your name",
+                scoreboardTitle: "Hall of Fame",
+                noScores: "No scores yet. Be the first adventurer!",
+                pointsSuffix: "pts",
                 soundOn: "Sound on",
                 soundOff: "Sound off",
                 instructions: "Type your answer and press Enter.",
                 answerLabel: "Answer",
                 submitLabel: "Submit",
-                answerInput: "Your answer",
+                answerInput: "",
                 enterNumber: "Please type a number.",
                 correct: "Correct! Great job!",
                 wrong: "Try again!",
@@ -652,6 +727,11 @@
                 streakLabel: "Serie",
                 shieldsLabel: "Scudi",
                 mistakesLabel: "Errori",
+                playerNameLabel: "Nome giocatore",
+                playerNamePlaceholder: "Il tuo nome",
+                scoreboardTitle: "Classifica",
+                noScores: "Ancora nessun punteggio. Diventa il primo eroe!",
+                pointsSuffix: "pti",
                 soundOn: "Audio attivo",
                 soundOff: "Audio disattivo",
                 instructions: "Scrivi la risposta e premi Invio.",
@@ -699,6 +779,11 @@
                 streakLabel: "Serie",
                 shieldsLabel: "Schilde",
                 mistakesLabel: "Fehler",
+                playerNameLabel: "Spielername",
+                playerNamePlaceholder: "Dein Name",
+                scoreboardTitle: "Bestenliste",
+                noScores: "Noch keine Punkte. Sei der erste Held!",
+                pointsSuffix: "Pkt",
                 soundOn: "Ton an",
                 soundOff: "Ton aus",
                 instructions: "Tippe deine Antwort und drücke Enter.",
@@ -746,6 +831,7 @@
                 rangeLabel: document.getElementById("range-label"),
                 rangeMin: document.getElementById("range-min"),
                 rangeMax: document.getElementById("range-max"),
+                playerName: document.getElementById("player-name"),
                 startButton: document.getElementById("start-button")
             },
             game: {
@@ -775,6 +861,8 @@
                 highestStreak: document.getElementById("highest-streak"),
                 bonuses: document.getElementById("bonuses-earned"),
                 wrongAnswers: document.getElementById("wrong-answers"),
+                scoreboardList: document.getElementById("scoreboard-list"),
+                scoreboardEmpty: document.getElementById("scoreboard-empty"),
                 playAgain: document.getElementById("play-again")
             },
             confetti: document.getElementById("confetti-container")
@@ -788,6 +876,7 @@
 
         const gameState = {
             language: "en",
+            playerName: "",
             character: null,
             characterNameKey: "unicornLabel",
             rangeMin: 2,
@@ -830,6 +919,82 @@
             };
         }
 
+        function loadScoreboard() {
+            const cookie = document.cookie
+                .split("; ")
+                .find(row => row.startsWith(`${SCOREBOARD_COOKIE}=`));
+            if (!cookie) {
+                return [];
+            }
+            const [, value] = cookie.split("=");
+            if (!value) {
+                return [];
+            }
+            try {
+                const parsed = JSON.parse(decodeURIComponent(value));
+                return Array.isArray(parsed) ? parsed.map(entry => ({
+                    name: typeof entry.name === "string" ? entry.name.trim().slice(0, 20) : "",
+                    score: Number.isFinite(entry.score) ? Math.round(entry.score) : 0,
+                    wrong: Number.isFinite(entry.wrong) ? Math.max(0, Math.round(entry.wrong)) : 0,
+                    timestamp: Number.isFinite(entry.timestamp) ? entry.timestamp : Date.now()
+                })) : [];
+            } catch (err) {
+                console.warn("Scoreboard cookie parse failed", err);
+                return [];
+            }
+        }
+
+        function saveScoreboard(entries) {
+            try {
+                const serialized = encodeURIComponent(JSON.stringify(entries));
+                const expires = new Date(Date.now() + COOKIE_MAX_AGE * 1000).toUTCString();
+                document.cookie = `${SCOREBOARD_COOKIE}=${serialized}; expires=${expires}; max-age=${COOKIE_MAX_AGE}; path=/; SameSite=Lax`;
+            } catch (err) {
+                console.warn("Scoreboard cookie save failed", err);
+            }
+        }
+
+        function renderScoreboard(entries = loadScoreboard()) {
+            const t = translations[gameState.language];
+            const list = DOM.win.scoreboardList;
+            const emptyMessage = DOM.win.scoreboardEmpty;
+            list.innerHTML = "";
+            if (!entries.length) {
+                emptyMessage.classList.remove("hidden");
+                return;
+            }
+            emptyMessage.classList.add("hidden");
+            entries.forEach(entry => {
+                const li = document.createElement("li");
+                const displayName = entry.name || "???";
+                const mainText = document.createTextNode(`${displayName} — ${entry.score} ${t.pointsSuffix}`);
+                const detail = document.createElement("span");
+                detail.textContent = ` (${t.wrongAnswersCount(entry.wrong)})`;
+                li.appendChild(mainText);
+                li.appendChild(detail);
+                list.appendChild(li);
+            });
+        }
+
+        function recordCurrentScore() {
+            const entries = loadScoreboard();
+            const name = (gameState.playerName || "").trim() || "???";
+            entries.push({
+                name,
+                score: gameState.score,
+                wrong: gameState.wrongAnswers,
+                timestamp: Date.now()
+            });
+            entries.sort((a, b) => {
+                if (b.score !== a.score) return b.score - a.score;
+                if (a.wrong !== b.wrong) return a.wrong - b.wrong;
+                return a.timestamp - b.timestamp;
+            });
+            const trimmed = entries.slice(0, SCOREBOARD_LIMIT);
+            saveScoreboard(trimmed);
+            renderScoreboard(trimmed);
+        }
+
         function clamp(value, min, max) {
             return Math.max(min, Math.min(max, value));
         }
@@ -837,13 +1002,15 @@
         function validateRange() {
             const min = parseInt(DOM.start.rangeMin.value, 10);
             const max = parseInt(DOM.start.rangeMax.value, 10);
+            const hasName = DOM.start.playerName.value.trim().length > 0;
             const isValid =
                 Number.isInteger(min) &&
                 Number.isInteger(max) &&
                 min >= 1 &&
                 max <= 12 &&
                 min <= max &&
-                Boolean(gameState.character);
+                Boolean(gameState.character) &&
+                hasName;
             DOM.start.startButton.disabled = !isValid;
         }
 
@@ -864,6 +1031,8 @@
             DOM.start.languageLabel.textContent = t.chooseLanguage;
             DOM.start.rangeLabel.textContent = t.chooseTables;
             DOM.start.startButton.textContent = t.startButton;
+            DOM.start.playerName.setAttribute("placeholder", t.playerNamePlaceholder);
+            DOM.start.playerName.setAttribute("aria-label", t.playerNameLabel);
             DOM.game.rangeDisplay.textContent = t.rangeDisplay(gameState.rangeMin, gameState.rangeMax);
             DOM.game.instructions.textContent = t.instructions;
             DOM.game.soundToggle.setAttribute("aria-label", gameState.soundEnabled ? t.soundOff : t.soundOn);
@@ -882,6 +1051,7 @@
             Array.from(DOM.start.languageSelect.options).forEach(option => {
                 option.textContent = t.languageNames[option.value];
             });
+            renderScoreboard();
         }
 
         function updateUI() {
@@ -1037,6 +1207,7 @@
             DOM.win.wrongAnswers.textContent = gameState.wrongAnswers;
             DOM.win.playAgain.textContent = t.playAgain;
 
+            recordCurrentScore();
             launchConfetti();
             playSfx("win");
         }
@@ -1057,6 +1228,8 @@
         }
 
         function startGame() {
+            gameState.playerName = DOM.start.playerName.value.trim().slice(0, 20);
+            DOM.start.playerName.value = gameState.playerName;
             gameState.rangeMin = parseInt(DOM.start.rangeMin.value, 10);
             gameState.rangeMax = parseInt(DOM.start.rangeMax.value, 10);
             gameState.score = 0;
@@ -1238,6 +1411,9 @@
                 validateRange();
             });
             DOM.start.rangeMax.addEventListener("input", () => {
+                validateRange();
+            });
+            DOM.start.playerName.addEventListener("input", () => {
                 validateRange();
             });
 
