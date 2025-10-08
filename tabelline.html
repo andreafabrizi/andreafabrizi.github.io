@@ -287,6 +287,9 @@
             padding: 24px;
             border-radius: 20px;
             background: rgba(126, 201, 163, 0.12);
+            width: 100%;
+            max-width: 520px;
+            margin: 0 auto;
         }
 
         .question-text {
@@ -324,6 +327,39 @@
 
         .answer-form input[type="text"] {
             width: clamp(100px, 30vw, 140px);
+        }
+
+        .number-pad {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(70px, 1fr));
+            gap: 12px;
+            width: 100%;
+        }
+
+        .number-pad button {
+            padding: 16px;
+            font-size: 1.4rem;
+            border-radius: 14px;
+            border: none;
+            background: rgba(74, 144, 226, 0.15);
+            color: var(--text);
+            font-weight: bold;
+            box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.08);
+            transition: transform 120ms ease, background 120ms ease;
+        }
+
+        .number-pad button:active {
+            transform: translateY(2px);
+        }
+
+        .number-pad button.special {
+            font-size: 1rem;
+        }
+
+        .number-pad button.submit-key {
+            grid-column: span 2;
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            color: #fff;
         }
 
         .feedback {
@@ -585,9 +621,24 @@
 
                 <form id="answer-form" class="answer-form" autocomplete="off">
                     <label for="answer-input" class="visually-hidden" data-i18n="answerLabel">Answer</label>
-                    <input type="text" id="answer-input" inputmode="numeric" autocomplete="off" aria-label="">
-                    <button type="submit" id="submit-answer" data-i18n="submitLabel">Submit</button>
+                    <input type="text" id="answer-input" inputmode="numeric" autocomplete="off" aria-label="Your answer">
                 </form>
+
+                <div class="number-pad" id="number-pad" aria-label="Number pad">
+                    <button type="button" data-key="1">1</button>
+                    <button type="button" data-key="2">2</button>
+                    <button type="button" data-key="3">3</button>
+                    <button type="button" data-key="4">4</button>
+                    <button type="button" data-key="5">5</button>
+                    <button type="button" data-key="6">6</button>
+                    <button type="button" data-key="7">7</button>
+                    <button type="button" data-key="8">8</button>
+                    <button type="button" data-key="9">9</button>
+                    <button type="button" class="special" data-action="clear" data-i18n="padClear">Clear</button>
+                    <button type="button" data-key="0">0</button>
+                    <button type="button" class="special" data-action="delete" data-i18n="padDelete">Back</button>
+                    <button type="button" class="submit-key special" data-action="submit" data-i18n="submitLabel">Submit</button>
+                </div>
 
                 <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
             </div>
@@ -657,6 +708,7 @@
         const SCOREBOARD_COOKIE = "mpaScoreboard";
         const SCOREBOARD_LIMIT = 10;
         const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // one year in seconds
+        const MAX_ANSWER_LENGTH = 4;
 
         const translations = {
             en: {
@@ -680,12 +732,15 @@
                 scoreboardTitle: "Hall of Fame",
                 noScores: "No scores yet. Be the first adventurer!",
                 pointsSuffix: "pts",
+                padClear: "Clear",
+                padDelete: "Back",
+                padAriaLabel: "On-screen number pad",
                 soundOn: "Sound on",
                 soundOff: "Sound off",
                 instructions: "Type your answer and press Enter.",
                 answerLabel: "Answer",
                 submitLabel: "Submit",
-                answerInput: "",
+                answerInput: "Your answer",
                 enterNumber: "Please type a number.",
                 correct: "Correct! Great job!",
                 wrong: "Try again!",
@@ -732,6 +787,9 @@
                 scoreboardTitle: "Classifica",
                 noScores: "Ancora nessun punteggio. Diventa il primo eroe!",
                 pointsSuffix: "pti",
+                padClear: "Cancella",
+                padDelete: "Indietro",
+                padAriaLabel: "Tastierino numerico",
                 soundOn: "Audio attivo",
                 soundOff: "Audio disattivo",
                 instructions: "Scrivi la risposta e premi Invio.",
@@ -784,6 +842,9 @@
                 scoreboardTitle: "Bestenliste",
                 noScores: "Noch keine Punkte. Sei der erste Held!",
                 pointsSuffix: "Pkt",
+                padClear: "Löschen",
+                padDelete: "Zurück",
+                padAriaLabel: "Nummernfeld",
                 soundOn: "Ton an",
                 soundOff: "Ton aus",
                 instructions: "Tippe deine Antwort und drücke Enter.",
@@ -847,6 +908,7 @@
                 shinyPill: document.getElementById("shiny-pill"),
                 answerForm: document.getElementById("answer-form"),
                 answerInput: document.getElementById("answer-input"),
+                numberPad: document.getElementById("number-pad"),
                 feedback: document.getElementById("feedback"),
                 pathSlots: document.getElementById("path-slots"),
                 sprite: document.getElementById("character-sprite"),
@@ -1039,7 +1101,9 @@
             DOM.game.soundToggle.setAttribute("aria-pressed", gameState.soundEnabled ? "true" : "false");
             DOM.game.soundToggle.textContent = gameState.soundEnabled ? "🔊" : "🔇";
             DOM.game.answerInput.setAttribute("aria-label", t.answerInput);
-            DOM.game.answerInput.setAttribute("placeholder", t.answerInput);
+            if (DOM.game.numberPad) {
+                DOM.game.numberPad.setAttribute("aria-label", t.padAriaLabel);
+            }
 
             document.querySelectorAll("[data-i18n]").forEach(node => {
                 const key = node.getAttribute("data-i18n");
@@ -1149,6 +1213,7 @@
                 showFeedback(t.wrong, "wrong");
                 updateUI();
                 gameState.isSubmitting = false;
+                DOM.game.answerInput.value = "";
                 DOM.game.answerInput.focus();
                 return;
             }
@@ -1161,6 +1226,7 @@
 
             updateUI();
             gameState.isSubmitting = false;
+            DOM.game.answerInput.value = "";
             DOM.game.answerInput.focus();
         }
 
@@ -1394,6 +1460,47 @@
             }
         }
 
+        function handleNumberPadClick(event) {
+            const target = event.target;
+            if (!(target instanceof HTMLElement) || target.tagName !== "BUTTON") {
+                return;
+            }
+            event.preventDefault();
+            const key = target.getAttribute("data-key");
+            const action = target.getAttribute("data-action");
+            let current = DOM.game.answerInput.value.trim();
+
+            if (key) {
+                if (current.length >= MAX_ANSWER_LENGTH) {
+                    DOM.game.answerInput.focus();
+                    return;
+                }
+                DOM.game.answerInput.value = `${current}${key}`;
+                DOM.game.answerInput.focus();
+                return;
+            }
+
+            switch (action) {
+                case "clear":
+                    DOM.game.answerInput.value = "";
+                    DOM.game.answerInput.focus();
+                    break;
+                case "delete":
+                    DOM.game.answerInput.value = current.slice(0, -1);
+                    DOM.game.answerInput.focus();
+                    break;
+                case "submit":
+                    if (typeof DOM.game.answerForm.requestSubmit === "function") {
+                        DOM.game.answerForm.requestSubmit();
+                    } else {
+                        DOM.game.answerForm.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
         function attachEvents() {
             DOM.start.characters.forEach(card => {
                 card.addEventListener("click", () => {
@@ -1442,6 +1549,9 @@
             });
 
             DOM.game.answerForm.addEventListener("submit", handleAnswer);
+            if (DOM.game.numberPad) {
+                DOM.game.numberPad.addEventListener("click", handleNumberPadClick);
+            }
 
             DOM.win.playAgain.addEventListener("click", () => {
                 showStartScreen();
