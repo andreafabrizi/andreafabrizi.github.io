@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplication Path Adventure</title>
+    <style>
+        :root {
+            --font-family: 'Arial', sans-serif;
+            --bg-color: #e7f5ff;
+            --card-bg: #ffffff;
+            --primary: #4a90e2;
+            --secondary: #7ec9a3;
+            --accent: #f5a623;
+            --correct: #5cb85c;
+            --wrong: #d9534f;
+            --text: #333333;
+            --shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+            --path-length: 20;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--bg-color);
+            font-family: var(--font-family);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+        }
+
+        main {
+            width: 100%;
+            max-width: 960px;
+            background: var(--card-bg);
+            box-shadow: var(--shadow);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        section {
+            padding: 32px clamp(16px, 5vw, 48px);
+            animation: fade-in 250ms ease;
+        }
+
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            margin: 0 0 24px;
+            font-size: clamp(1.8rem, 4vw, 2.6rem);
+            text-align: center;
+            color: var(--primary);
+        }
+
+        h2 {
+            margin: 0 0 16px;
+            font-size: clamp(1.4rem, 3vw, 2rem);
+            text-align: center;
+        }
+
+        p {
+            margin: 0 0 16px;
+            text-align: center;
+        }
+
+        .grid {
+            display: grid;
+            gap: 24px;
+        }
+
+        .picker-group {
+            background: rgba(74, 144, 226, 0.08);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .picker-label {
+            display: block;
+            margin-bottom: 16px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .character-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+        }
+
+        .character-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding: 18px;
+            border-radius: 16px;
+            border: 2px solid transparent;
+            background: #fff;
+            cursor: pointer;
+            transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+            min-height: 150px;
+        }
+
+        .character-card:focus-visible {
+            outline: 3px solid var(--accent);
+            outline-offset: 4px;
+        }
+
+        .character-card.selected {
+            border-color: var(--accent);
+            box-shadow: 0 10px 24px rgba(245, 166, 35, 0.25);
+            transform: translateY(-4px);
+        }
+
+        .character-emoji {
+            font-size: clamp(3.2rem, 6vw, 4.5rem);
+        }
+
+        .range-inputs {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .range-inputs label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+
+        input[type="number"],
+        select,
+        input[type="text"] {
+            width: 80px;
+            padding: 12px;
+            border-radius: 12px;
+            border: 2px solid rgba(0, 0, 0, 0.15);
+            font-size: 1.1rem;
+            text-align: center;
+            transition: border-color 150ms ease, box-shadow 150ms ease;
+        }
+
+        input[type="number"]:focus,
+        select:focus,
+        input[type="text"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.2);
+            outline: none;
+        }
+
+        select {
+            width: clamp(180px, 40vw, 240px);
+        }
+
+        .language-picker {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            border-radius: 16px;
+            background: rgba(126, 201, 163, 0.1);
+        }
+
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            border-radius: 14px;
+            padding: 14px 26px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--primary), #76b5ff);
+            color: #fff;
+            box-shadow: 0 12px 24px rgba(74, 144, 226, 0.25);
+            transition: transform 150ms ease, box-shadow 150ms ease, filter 150ms ease;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        button:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 28px rgba(74, 144, 226, 0.3);
+            filter: brightness(1.05);
+        }
+
+        button:focus-visible {
+            outline: 3px solid var(--accent);
+            outline-offset: 3px;
+        }
+
+        /* --- Game screen --- */
+        .top-bar {
+            display: grid;
+            gap: 18px;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            margin-bottom: 28px;
+        }
+
+        .badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 14px;
+            border-radius: 16px;
+            background: rgba(74, 144, 226, 0.1);
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .badge strong {
+            font-size: 1.2rem;
+        }
+
+        .sound-toggle {
+            justify-self: center;
+            align-self: center;
+            width: auto;
+            min-width: 56px;
+            padding: 10px 16px;
+            background: rgba(0, 0, 0, 0.1);
+            color: var(--text);
+        }
+
+        .question-panel {
+            display: grid;
+            gap: 16px;
+            justify-items: center;
+            padding: 24px;
+            border-radius: 20px;
+            background: rgba(126, 201, 163, 0.12);
+        }
+
+        .question-text {
+            font-size: clamp(2.4rem, 6vw, 3.8rem);
+            font-weight: 700;
+            letter-spacing: 2px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .question-text.shiny {
+            color: var(--accent);
+            text-shadow: 0 0 16px rgba(245, 166, 35, 0.6);
+        }
+
+        .shiny-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(245, 166, 35, 0.16);
+            color: var(--accent);
+            border-radius: 999px;
+            padding: 6px 14px;
+            font-size: 0.95rem;
+            font-weight: bold;
+        }
+
+        .answer-form {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .answer-form input[type="text"] {
+            width: clamp(100px, 30vw, 140px);
+        }
+
+        .feedback {
+            min-height: 32px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 180ms ease, transform 180ms ease;
+        }
+
+        .feedback.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .feedback.correct {
+            color: var(--correct);
+        }
+
+        .feedback.wrong {
+            color: var(--wrong);
+        }
+
+        .progress-track {
+            position: relative;
+            margin: 30px 0 20px;
+            background: rgba(74, 144, 226, 0.12);
+            border-radius: 999px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            padding: 0 28px;
+        }
+
+        .path-slots {
+            position: relative;
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .slot-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .character-sprite {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: clamp(2.2rem, 5vw, 3rem);
+            transition: transform 220ms ease;
+            will-change: transform;
+        }
+
+        .instructions {
+            text-align: center;
+            font-size: 0.95rem;
+            color: rgba(0, 0, 0, 0.6);
+        }
+
+        .win-details {
+            display: grid;
+            gap: 18px;
+            justify-items: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            width: 100%;
+        }
+
+        .stat-card {
+            padding: 18px;
+            border-radius: 16px;
+            background: rgba(74, 144, 226, 0.08);
+            text-align: center;
+        }
+
+        .confetti-container {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 12px;
+            height: 24px;
+            background: hsl(var(--hue), 80%, 60%);
+            opacity: 0.9;
+            animation: confetti-fall linear infinite;
+        }
+
+        @keyframes confetti-fall {
+            from {
+                transform: translateY(-120vh) rotate(0deg);
+            }
+            to {
+                transform: translateY(120vh) rotate(720deg);
+            }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 12px;
+            }
+            .top-bar {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 1ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 1ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <section id="start-screen">
+            <h1 id="start-title">Multiplication Path Adventure</h1>
+            <div class="grid">
+                <div class="language-picker">
+                    <label class="picker-label" for="language-select" id="language-label" data-i18n="chooseLanguage">Language</label>
+                    <select id="language-select" aria-labelledby="language-label">
+                        <option value="en">English</option>
+                        <option value="it">Italiano</option>
+                        <option value="de">Deutsch</option>
+                    </select>
+                </div>
+
+                <div class="picker-group">
+                    <span class="picker-label" id="character-label" data-i18n="chooseCharacter">Choose your hero</span>
+                    <div class="character-options" role="listbox" aria-labelledby="character-label">
+                        <button type="button" class="character-card" data-character="🦄" data-name="unicorn" aria-pressed="false">
+                            <span class="character-emoji" aria-hidden="true">🦄</span>
+                            <span class="character-name" data-i18n="unicornLabel">Unicorn</span>
+                        </button>
+                        <button type="button" class="character-card" data-character="👸" data-name="princess" aria-pressed="false">
+                            <span class="character-emoji" aria-hidden="true">👸</span>
+                            <span class="character-name" data-i18n="princessLabel">Princess</span>
+                        </button>
+                        <button type="button" class="character-card" data-character="🐉" data-name="dragon" aria-pressed="false">
+                            <span class="character-emoji" aria-hidden="true">🐉</span>
+                            <span class="character-name" data-i18n="dragonLabel">Dragon</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="picker-group">
+                    <span class="picker-label" id="range-label" data-i18n="chooseTables">Pick your tables</span>
+                    <div class="range-inputs" aria-labelledby="range-label">
+                        <label for="range-min">
+                            <span data-i18n="fromLabel">From table</span>
+                            <input type="number" id="range-min" min="1" max="12" value="2" inputmode="numeric">
+                        </label>
+                        <label for="range-max">
+                            <span data-i18n="toLabel">To table</span>
+                            <input type="number" id="range-max" min="1" max="12" value="9" inputmode="numeric">
+                        </label>
+                    </div>
+                </div>
+
+                <button id="start-button" type="button" disabled>Start Game</button>
+            </div>
+        </section>
+
+        <section id="game-screen" class="hidden">
+            <div class="top-bar">
+                <div class="badge">
+                    <span id="game-character" aria-hidden="true">🦄</span>
+                    <strong id="character-name">Unicorn</strong>
+                </div>
+                <div class="badge">
+                    <strong data-i18n="rangeLabel">Tables</strong>
+                    <span id="range-display">2 – 9</span>
+                </div>
+                <div class="badge">
+                    <strong data-i18n="scoreLabel">Score</strong>
+                    <span id="score-display">0</span>
+                </div>
+                <div class="badge">
+                    <strong data-i18n="streakLabel">Streak</strong>
+                    <span id="streak-display">0</span>
+                </div>
+                <div class="badge">
+                    <strong data-i18n="shieldsLabel">Shields</strong>
+                    <span id="hearts-display">0</span>
+                </div>
+                <div class="badge">
+                    <strong data-i18n="mistakesLabel">Wrong</strong>
+                    <span id="wrongs-display">0</span>
+                </div>
+                <button class="sound-toggle" id="sound-toggle" type="button" aria-pressed="true" aria-label="Toggle sound">
+                    🔊
+                </button>
+            </div>
+
+            <div class="question-panel">
+                <div class="question-text" id="question-text">8 × 7 = ?</div>
+                <div class="shiny-pill hidden" id="shiny-pill">✨ Double Value!</div>
+
+                <form id="answer-form" class="answer-form" autocomplete="off">
+                    <label for="answer-input" class="visually-hidden" data-i18n="answerLabel">Answer</label>
+                    <input type="text" id="answer-input" inputmode="numeric" autocomplete="off" aria-label="Your answer">
+                    <button type="submit" id="submit-answer" data-i18n="submitLabel">Submit</button>
+                </form>
+
+                <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+            </div>
+
+            <div class="progress-track">
+                <div class="path-slots" id="path-slots"></div>
+                <div class="character-sprite" id="character-sprite" aria-hidden="true">🦄</div>
+            </div>
+
+            <p class="instructions" data-i18n="instructions">Type your answer and press Enter.</p>
+        </section>
+
+        <section id="win-screen" class="hidden">
+            <h2 id="win-title">Hooray!</h2>
+            <div class="win-details">
+                <p id="bonus-message"></p>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <strong data-i18n="finalScoreLabel">Final Score</strong>
+                        <div id="final-score">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <strong data-i18n="questionsLabel">Total Questions</strong>
+                        <div id="total-questions">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <strong data-i18n="accuracyLabel">Correct %</strong>
+                        <div id="accuracy-rate">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <strong data-i18n="bestStreakLabel">Highest Streak</strong>
+                        <div id="highest-streak">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <strong data-i18n="bonusesLabel">Bonuses Earned</strong>
+                        <div id="bonuses-earned">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <strong data-i18n="mistakesMadeLabel">Wrong Answers</strong>
+                        <div id="wrong-answers">0</div>
+                    </div>
+                </div>
+                <button id="play-again" type="button">Play Again</button>
+            </div>
+        </section>
+    </main>
+
+    <div class="confetti-container" id="confetti-container" aria-hidden="true"></div>
+
+    <script>
+    (function () {
+        const PATH_LENGTH = 20;
+        const POINTS_CORRECT = 10;
+        const POINTS_WRONG = -5;
+        const MAGIC_BONUS_STREAK = 3;
+        const HEART_SHIELD_STREAK = 5;
+        const MAGIC_BONUS_POINTS = 20;
+        const MAGIC_BONUS_STEPS = 1;
+        const SHINY_CHANCE = 0.1;
+        const SHINY_MULTIPLIER = 2;
+        const FEEDBACK_DURATION = 3200; // milliseconds
+
+        const translations = {
+            en: {
+                title: "Multiplication Path Adventure",
+                chooseLanguage: "Language",
+                chooseCharacter: "Choose your hero",
+                unicornLabel: "Unicorn",
+                princessLabel: "Princess",
+                dragonLabel: "Dragon",
+                chooseTables: "Pick your tables",
+                fromLabel: "From table",
+                toLabel: "To table",
+                startButton: "Start Game",
+                rangeLabel: "Tables",
+                scoreLabel: "Score",
+                streakLabel: "Streak",
+                shieldsLabel: "Shields",
+                mistakesLabel: "Wrong",
+                soundOn: "Sound on",
+                soundOff: "Sound off",
+                instructions: "Type your answer and press Enter.",
+                answerLabel: "Answer",
+                submitLabel: "Submit",
+                answerInput: "Your answer",
+                enterNumber: "Please type a number.",
+                correct: "Correct! Great job!",
+                wrong: "Try again!",
+                magicBonus: "Magic Bonus! +20 points and an extra step!",
+                heartShield: "Heart Shield earned! It will block the next mistake.",
+                shinyLabel: "✨ Double Value!",
+                winTitle: "You made it!",
+                perfectScore: "Perfect run! Bonus +200 points! Amazing!",
+                finalScoreLabel: "Final Score",
+                questionsLabel: "Total Questions",
+                accuracyLabel: "Correct %",
+                bestStreakLabel: "Highest Streak",
+                bonusesLabel: "Bonuses Earned",
+                mistakesMadeLabel: "Wrong Answers",
+                playAgain: "Play Again",
+                bonusCongrats: "No mistakes! You're a multiplication star!",
+                shieldsLeft: n => `${n} shield${n === 1 ? "" : "s"}`,
+                wrongAnswersCount: n => `${n} wrong`,
+                rangeDisplay: (min, max) => `${min} – ${max}`,
+                languageNames: {
+                    en: "English",
+                    it: "Italiano",
+                    de: "Deutsch"
+                }
+            },
+            it: {
+                title: "Avventura delle Tabelline",
+                chooseLanguage: "Lingua",
+                chooseCharacter: "Scegli il tuo eroe",
+                unicornLabel: "Unicorno",
+                princessLabel: "Principessa",
+                dragonLabel: "Drago",
+                chooseTables: "Scegli le tabelline",
+                fromLabel: "Dalla tabellina",
+                toLabel: "Alla tabellina",
+                startButton: "Inizia a giocare",
+                rangeLabel: "Tabelline",
+                scoreLabel: "Punteggio",
+                streakLabel: "Serie",
+                shieldsLabel: "Scudi",
+                mistakesLabel: "Errori",
+                soundOn: "Audio attivo",
+                soundOff: "Audio disattivo",
+                instructions: "Scrivi la risposta e premi Invio.",
+                answerLabel: "Risposta",
+                submitLabel: "Invia",
+                answerInput: "La tua risposta",
+                enterNumber: "Per favore inserisci un numero.",
+                correct: "Corretto! Bravissimo!",
+                wrong: "Riprova!",
+                magicBonus: "Bonus Magico! +20 punti e un passo extra!",
+                heartShield: "Scudo Cuore ottenuto! Bloccherà il prossimo errore.",
+                shinyLabel: "✨ Doppio Valore!",
+                winTitle: "Ce l'hai fatta!",
+                perfectScore: "Senza errori! Bonus +200 punti! Complimenti!",
+                finalScoreLabel: "Punteggio Finale",
+                questionsLabel: "Domande Totali",
+                accuracyLabel: "% Risposte Corrette",
+                bestStreakLabel: "Serie Migliore",
+                bonusesLabel: "Bonus Ottenuti",
+                mistakesMadeLabel: "Risposte Sbagliate",
+                playAgain: "Gioca di nuovo",
+                bonusCongrats: "Nessun errore! Sei una stella delle tabelline!",
+                shieldsLeft: n => `${n} scudo${n === 1 ? "" : "i"}`,
+                wrongAnswersCount: n => `${n} errore${n === 1 ? "" : "i"}`,
+                rangeDisplay: (min, max) => `${min} – ${max}`,
+                languageNames: {
+                    en: "Inglese",
+                    it: "Italiano",
+                    de: "Tedesco"
+                }
+            },
+            de: {
+                title: "Multiplikations-Abenteuer",
+                chooseLanguage: "Sprache",
+                chooseCharacter: "Wähle deinen Helden",
+                unicornLabel: "Einhorn",
+                princessLabel: "Prinzessin",
+                dragonLabel: "Drache",
+                chooseTables: "Wähle deine Reihen",
+                fromLabel: "Von Reihe",
+                toLabel: "Bis Reihe",
+                startButton: "Spiel starten",
+                rangeLabel: "Reihen",
+                scoreLabel: "Punkte",
+                streakLabel: "Serie",
+                shieldsLabel: "Schilde",
+                mistakesLabel: "Fehler",
+                soundOn: "Ton an",
+                soundOff: "Ton aus",
+                instructions: "Tippe deine Antwort und drücke Enter.",
+                answerLabel: "Antwort",
+                submitLabel: "Absenden",
+                answerInput: "Deine Antwort",
+                enterNumber: "Bitte gib eine Zahl ein.",
+                correct: "Richtig! Super gemacht!",
+                wrong: "Versuch es nochmal!",
+                magicBonus: "Magie-Bonus! +20 Punkte und ein Extraschritt!",
+                heartShield: "Herzschild erhalten! Es blockt den nächsten Fehler.",
+                shinyLabel: "✨ Doppelter Wert!",
+                winTitle: "Geschafft!",
+                perfectScore: "Keine Fehler! Bonus +200 Punkte! Fantastisch!",
+                finalScoreLabel: "Endpunktzahl",
+                questionsLabel: "Fragen insgesamt",
+                accuracyLabel: "Richtig %",
+                bestStreakLabel: "Beste Serie",
+                bonusesLabel: "Bonis erhalten",
+                mistakesMadeLabel: "Falsche Antworten",
+                playAgain: "Nochmal spielen",
+                bonusCongrats: "Keine Fehler! Du bist ein Multiplikationsstar!",
+                shieldsLeft: n => `${n} Schild${n === 1 ? "" : "er"}`,
+                wrongAnswersCount: n => `${n} Fehler`,
+                rangeDisplay: (min, max) => `${min} – ${max}`,
+                languageNames: {
+                    en: "Englisch",
+                    it: "Italienisch",
+                    de: "Deutsch"
+                }
+            }
+        };
+
+        const DOM = {
+            screens: {
+                start: document.getElementById("start-screen"),
+                game: document.getElementById("game-screen"),
+                win: document.getElementById("win-screen")
+            },
+            start: {
+                title: document.getElementById("start-title"),
+                languageLabel: document.getElementById("language-label"),
+                languageSelect: document.getElementById("language-select"),
+                characters: Array.from(document.querySelectorAll(".character-card")),
+                rangeLabel: document.getElementById("range-label"),
+                rangeMin: document.getElementById("range-min"),
+                rangeMax: document.getElementById("range-max"),
+                startButton: document.getElementById("start-button")
+            },
+            game: {
+                characterEmoji: document.getElementById("game-character"),
+                characterName: document.getElementById("character-name"),
+                rangeDisplay: document.getElementById("range-display"),
+                score: document.getElementById("score-display"),
+                streak: document.getElementById("streak-display"),
+                hearts: document.getElementById("hearts-display"),
+                wrongs: document.getElementById("wrongs-display"),
+                soundToggle: document.getElementById("sound-toggle"),
+                questionText: document.getElementById("question-text"),
+                shinyPill: document.getElementById("shiny-pill"),
+                answerForm: document.getElementById("answer-form"),
+                answerInput: document.getElementById("answer-input"),
+                feedback: document.getElementById("feedback"),
+                pathSlots: document.getElementById("path-slots"),
+                sprite: document.getElementById("character-sprite"),
+                instructions: document.querySelector(".instructions")
+            },
+            win: {
+                title: document.getElementById("win-title"),
+                bonusMessage: document.getElementById("bonus-message"),
+                finalScore: document.getElementById("final-score"),
+                totalQuestions: document.getElementById("total-questions"),
+                accuracy: document.getElementById("accuracy-rate"),
+                highestStreak: document.getElementById("highest-streak"),
+                bonuses: document.getElementById("bonuses-earned"),
+                wrongAnswers: document.getElementById("wrong-answers"),
+                playAgain: document.getElementById("play-again")
+            },
+            confetti: document.getElementById("confetti-container")
+        };
+
+        const audio = {
+            context: null,
+            masterGain: null,
+            unlocked: false
+        };
+
+        const gameState = {
+            language: "en",
+            character: null,
+            characterNameKey: "unicornLabel",
+            rangeMin: 2,
+            rangeMax: 9,
+            score: 0,
+            position: 0,
+            streak: 0,
+            hearts: 0,
+            wrongAnswers: 0,
+            soundEnabled: true,
+            pathLength: PATH_LENGTH,
+            isGameStarted: false,
+            isSubmitting: false,
+            isShinyQuestion: false,
+            shieldActive: false,
+            currentQuestion: null,
+            stats: {
+                totalQuestions: 0,
+                correctAnswers: 0,
+                highestStreak: 0,
+                bonusesEarned: 0
+            }
+        };
+
+        function resetState() {
+            gameState.score = 0;
+            gameState.position = 0;
+            gameState.streak = 0;
+            gameState.hearts = 0;
+            gameState.wrongAnswers = 0;
+            gameState.isGameStarted = false;
+            gameState.isSubmitting = false;
+            gameState.isShinyQuestion = false;
+            gameState.currentQuestion = null;
+            gameState.stats = {
+                totalQuestions: 0,
+                correctAnswers: 0,
+                highestStreak: 0,
+                bonusesEarned: 0
+            };
+        }
+
+        function clamp(value, min, max) {
+            return Math.max(min, Math.min(max, value));
+        }
+
+        function validateRange() {
+            const min = parseInt(DOM.start.rangeMin.value, 10);
+            const max = parseInt(DOM.start.rangeMax.value, 10);
+            const isValid =
+                Number.isInteger(min) &&
+                Number.isInteger(max) &&
+                min >= 1 &&
+                max <= 12 &&
+                min <= max &&
+                Boolean(gameState.character);
+            DOM.start.startButton.disabled = !isValid;
+        }
+
+        function selectCharacter(card) {
+            DOM.start.characters.forEach(btn => {
+                btn.classList.toggle("selected", btn === card);
+                btn.setAttribute("aria-pressed", btn === card ? "true" : "false");
+            });
+            gameState.character = card.dataset.character;
+            gameState.characterNameKey = `${card.dataset.name}Label`;
+            validateRange();
+        }
+
+        function updateLanguageStrings() {
+            const t = translations[gameState.language];
+            document.documentElement.lang = gameState.language;
+            DOM.start.title.textContent = t.title;
+            DOM.start.languageLabel.textContent = t.chooseLanguage;
+            DOM.start.rangeLabel.textContent = t.chooseTables;
+            DOM.start.startButton.textContent = t.startButton;
+            DOM.game.rangeDisplay.textContent = t.rangeDisplay(gameState.rangeMin, gameState.rangeMax);
+            DOM.game.instructions.textContent = t.instructions;
+            DOM.game.soundToggle.setAttribute("aria-label", gameState.soundEnabled ? t.soundOff : t.soundOn);
+            DOM.game.soundToggle.setAttribute("aria-pressed", gameState.soundEnabled ? "true" : "false");
+            DOM.game.soundToggle.textContent = gameState.soundEnabled ? "🔊" : "🔇";
+            DOM.game.answerInput.setAttribute("aria-label", t.answerInput);
+            DOM.game.answerInput.setAttribute("placeholder", t.answerInput);
+
+            document.querySelectorAll("[data-i18n]").forEach(node => {
+                const key = node.getAttribute("data-i18n");
+                if (typeof t[key] === "string") {
+                    node.textContent = t[key];
+                }
+            });
+
+            Array.from(DOM.start.languageSelect.options).forEach(option => {
+                option.textContent = t.languageNames[option.value];
+            });
+        }
+
+        function updateUI() {
+            const t = translations[gameState.language];
+            DOM.game.characterEmoji.textContent = gameState.character;
+            DOM.game.characterName.textContent = t[gameState.characterNameKey];
+            DOM.game.rangeDisplay.textContent = t.rangeDisplay(gameState.rangeMin, gameState.rangeMax);
+            DOM.game.score.textContent = gameState.score;
+            DOM.game.streak.textContent = gameState.streak;
+            DOM.game.hearts.textContent = gameState.hearts > 0 ? "🛡️".repeat(gameState.hearts) : "0";
+            DOM.game.wrongs.textContent = gameState.wrongAnswers;
+
+            const pathWidth = DOM.game.pathSlots.clientWidth;
+            const spriteWidth = DOM.game.sprite.clientWidth || 0;
+            const maxPos = gameState.pathLength;
+            const progress = maxPos === 0 ? 0 : clamp(gameState.position / maxPos, 0, 1);
+            const x = progress * (pathWidth - spriteWidth);
+            DOM.game.sprite.style.transform = `translate(calc(${x}px), -50%)`;
+        }
+
+        function showFeedback(message, type) {
+            DOM.game.feedback.textContent = message;
+            DOM.game.feedback.classList.remove("correct", "wrong", "visible");
+            if (type) {
+                DOM.game.feedback.classList.add(type);
+            }
+            requestAnimationFrame(() => {
+                DOM.game.feedback.classList.add("visible");
+            });
+            clearTimeout(showFeedback.timeoutId);
+            showFeedback.timeoutId = setTimeout(() => {
+                DOM.game.feedback.classList.remove("visible");
+            }, FEEDBACK_DURATION);
+        }
+
+        function createQuestion() {
+            const range = gameState.rangeMax - gameState.rangeMin + 1;
+            const num1 = Math.floor(Math.random() * range) + gameState.rangeMin;
+            const num2 = Math.floor(Math.random() * 10) + 1;
+            return {
+                num1,
+                num2,
+                answer: num1 * num2
+            };
+        }
+
+        function nextQuestion() {
+            if (gameState.position >= gameState.pathLength) {
+                showWinScreen();
+                return;
+            }
+            gameState.stats.totalQuestions += 1;
+            gameState.currentQuestion = createQuestion();
+            gameState.isShinyQuestion = Math.random() < SHINY_CHANCE;
+            DOM.game.questionText.textContent = `${gameState.currentQuestion.num1} × ${gameState.currentQuestion.num2} = ?`;
+            DOM.game.questionText.classList.toggle("shiny", gameState.isShinyQuestion);
+            DOM.game.shinyPill.textContent = translations[gameState.language].shinyLabel;
+            DOM.game.shinyPill.classList.toggle("hidden", !gameState.isShinyQuestion);
+            DOM.game.answerInput.value = "";
+            DOM.game.answerInput.focus();
+            gameState.isSubmitting = false;
+        }
+
+        function applyCorrect() {
+            const t = translations[gameState.language];
+            const multiplier = gameState.isShinyQuestion ? SHINY_MULTIPLIER : 1;
+            const stepGain = multiplier;
+            const pointsGain = POINTS_CORRECT * multiplier;
+
+            gameState.score += pointsGain;
+            gameState.position = clamp(gameState.position + stepGain, 0, gameState.pathLength);
+            gameState.streak += 1;
+            gameState.stats.correctAnswers += 1;
+            gameState.stats.highestStreak = Math.max(gameState.stats.highestStreak, gameState.streak);
+
+            showFeedback(t.correct, "correct");
+            playSfx("correct");
+            playSfx("step");
+
+            if (gameState.streak > 0) {
+                applyBonusIfAny();
+            }
+
+            updateUI();
+            setTimeout(nextQuestion, 1600);
+        }
+
+        function applyWrong() {
+            const t = translations[gameState.language];
+            gameState.wrongAnswers += 1;
+
+            if (gameState.hearts > 0) {
+                gameState.hearts -= 1;
+                playSfx("shield");
+                showFeedback(t.wrong, "wrong");
+                updateUI();
+                gameState.isSubmitting = false;
+                DOM.game.answerInput.focus();
+                return;
+            }
+
+            gameState.score += POINTS_WRONG;
+            gameState.position = clamp(gameState.position - 1, 0, gameState.pathLength);
+            gameState.streak = 0;
+            showFeedback(t.wrong, "wrong");
+            playSfx("wrong");
+
+            updateUI();
+            gameState.isSubmitting = false;
+            DOM.game.answerInput.focus();
+        }
+
+        function applyBonusIfAny() {
+            const t = translations[gameState.language];
+            if (gameState.streak % MAGIC_BONUS_STREAK === 0) {
+                gameState.score += MAGIC_BONUS_POINTS;
+                gameState.position = clamp(gameState.position + MAGIC_BONUS_STEPS, 0, gameState.pathLength);
+                showFeedback(t.magicBonus, "correct");
+                gameState.stats.bonusesEarned += 1;
+                playSfx("bonus");
+                updateUI();
+            }
+            if (gameState.streak % HEART_SHIELD_STREAK === 0) {
+                gameState.hearts = clamp(gameState.hearts + 1, 0, 9);
+                gameState.stats.bonusesEarned += 1;
+                showFeedback(t.heartShield, "correct");
+                playSfx("shield");
+                updateUI();
+            }
+        }
+
+        function showWinScreen() {
+            const t = translations[gameState.language];
+            DOM.screens.game.classList.add("hidden");
+            DOM.screens.win.classList.remove("hidden");
+            DOM.win.title.textContent = t.winTitle;
+
+            if (gameState.wrongAnswers === 0) {
+                gameState.score += 200;
+                DOM.win.bonusMessage.textContent = `${t.perfectScore} ${t.bonusCongrats}`;
+            } else {
+                DOM.win.bonusMessage.textContent = "";
+            }
+
+            DOM.win.finalScore.textContent = gameState.score;
+            DOM.win.totalQuestions.textContent = gameState.stats.totalQuestions;
+            const accuracy = gameState.stats.totalQuestions
+                ? Math.round((gameState.stats.correctAnswers / gameState.stats.totalQuestions) * 100)
+                : 0;
+            DOM.win.accuracy.textContent = `${accuracy}%`;
+            DOM.win.highestStreak.textContent = gameState.stats.highestStreak;
+            DOM.win.bonuses.textContent = gameState.stats.bonusesEarned;
+            DOM.win.wrongAnswers.textContent = gameState.wrongAnswers;
+            DOM.win.playAgain.textContent = t.playAgain;
+
+            launchConfetti();
+            playSfx("win");
+        }
+
+        function launchConfetti() {
+            DOM.confetti.innerHTML = "";
+            const colors = [0, 45, 120, 200, 300];
+            const pieces = 80;
+            for (let i = 0; i < pieces; i++) {
+                const piece = document.createElement("div");
+                piece.className = "confetti";
+                piece.style.setProperty("--hue", colors[Math.floor(Math.random() * colors.length)]);
+                piece.style.left = `${Math.random() * 100}%`;
+                piece.style.animationDuration = `${Math.random() * 3 + 4}s`;
+                piece.style.animationDelay = `${Math.random() * 2}s`;
+                DOM.confetti.appendChild(piece);
+            }
+        }
+
+        function startGame() {
+            gameState.rangeMin = parseInt(DOM.start.rangeMin.value, 10);
+            gameState.rangeMax = parseInt(DOM.start.rangeMax.value, 10);
+            gameState.score = 0;
+            gameState.position = 0;
+            gameState.streak = 0;
+            gameState.hearts = 0;
+            gameState.wrongAnswers = 0;
+            gameState.stats.totalQuestions = 0;
+            gameState.stats.correctAnswers = 0;
+            gameState.stats.highestStreak = 0;
+            gameState.stats.bonusesEarned = 0;
+            gameState.isGameStarted = true;
+
+            DOM.screens.start.classList.add("hidden");
+            DOM.screens.win.classList.add("hidden");
+            DOM.screens.game.classList.remove("hidden");
+
+            DOM.game.characterEmoji.textContent = gameState.character;
+            DOM.game.characterName.textContent = translations[gameState.language][gameState.characterNameKey];
+            DOM.game.rangeDisplay.textContent = translations[gameState.language].rangeDisplay(gameState.rangeMin, gameState.rangeMax);
+            DOM.confetti.innerHTML = "";
+            DOM.game.feedback.textContent = "";
+            DOM.game.feedback.classList.remove("visible", "correct", "wrong");
+
+            if (!DOM.game.pathSlots.hasChildNodes()) {
+                for (let i = 0; i <= gameState.pathLength; i++) {
+                    const dot = document.createElement("div");
+                    dot.className = "slot-dot";
+                    DOM.game.pathSlots.appendChild(dot);
+                }
+            }
+
+            updateUI();
+            nextQuestion();
+        }
+
+        function showStartScreen() {
+            DOM.screens.win.classList.add("hidden");
+            DOM.screens.game.classList.add("hidden");
+            DOM.screens.start.classList.remove("hidden");
+            updateLanguageStrings();
+            validateRange();
+        }
+
+        function playSfx(type) {
+            if (!gameState.soundEnabled) {
+                return;
+            }
+            if (!audio.context) {
+                return;
+            }
+            const ctx = audio.context;
+            const now = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain).connect(audio.masterGain);
+
+            switch (type) {
+                case "correct":
+                    osc.type = "triangle";
+                    osc.frequency.setValueAtTime(660, now);
+                    osc.frequency.linearRampToValueAtTime(880, now + 0.18);
+                    gain.gain.setValueAtTime(0.001, now);
+                    gain.gain.linearRampToValueAtTime(0.25, now + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                    break;
+                case "wrong":
+                    osc.type = "sine";
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.linearRampToValueAtTime(110, now + 0.3);
+                    gain.gain.setValueAtTime(0.001, now);
+                    gain.gain.linearRampToValueAtTime(0.2, now + 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                    break;
+                case "step":
+                    osc.type = "square";
+                    osc.frequency.setValueAtTime(440, now);
+                    gain.gain.setValueAtTime(0.001, now);
+                    gain.gain.linearRampToValueAtTime(0.15, now + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                    break;
+                case "bonus":
+                    osc.type = "sawtooth";
+                    osc.frequency.setValueAtTime(520, now);
+                    osc.frequency.linearRampToValueAtTime(780, now + 0.35);
+                    gain.gain.setValueAtTime(0.001, now);
+                    gain.gain.linearRampToValueAtTime(0.2, now + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                    break;
+                case "shield":
+                    osc.type = "triangle";
+                    osc.frequency.setValueAtTime(660, now);
+                    osc.frequency.linearRampToValueAtTime(990, now + 0.25);
+                    gain.gain.setValueAtTime(0.001, now);
+                    gain.gain.linearRampToValueAtTime(0.18, now + 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                    break;
+                case "win":
+                    const freqs = [660, 880, 990];
+                    freqs.forEach((freq, idx) => {
+                        const oscInner = ctx.createOscillator();
+                        const gainInner = ctx.createGain();
+                        oscInner.type = "triangle";
+                        oscInner.frequency.setValueAtTime(freq, now + idx * 0.12);
+                        gainInner.gain.setValueAtTime(0.001, now + idx * 0.12);
+                        gainInner.gain.linearRampToValueAtTime(0.25, now + idx * 0.12 + 0.02);
+                        gainInner.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.3);
+                        oscInner.connect(gainInner).connect(audio.masterGain);
+                        oscInner.start(now + idx * 0.12);
+                        oscInner.stop(now + idx * 0.12 + 0.35);
+                    });
+                    osc.disconnect();
+                    return;
+                default:
+                    break;
+            }
+            osc.start(now);
+            osc.stop(now + 0.5);
+        }
+
+        function initAudio() {
+            if (audio.unlocked) {
+                return;
+            }
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const masterGain = ctx.createGain();
+                masterGain.gain.value = 0.5;
+                masterGain.connect(ctx.destination);
+                audio.context = ctx;
+                audio.masterGain = masterGain;
+                audio.unlocked = true;
+            } catch (err) {
+                console.error("Audio init failed", err);
+            }
+        }
+
+        function handleAnswer(event) {
+            event.preventDefault();
+            if (gameState.isSubmitting) {
+                return;
+            }
+            if (!gameState.currentQuestion) {
+                return;
+            }
+            gameState.isSubmitting = true;
+
+            const value = DOM.game.answerInput.value.trim();
+            const answer = parseInt(value, 10);
+            if (!Number.isInteger(answer)) {
+                showFeedback(translations[gameState.language].enterNumber, "wrong");
+                playSfx("wrong");
+                gameState.isSubmitting = false;
+                DOM.game.answerInput.focus();
+                return;
+            }
+
+            if (answer === gameState.currentQuestion.answer) {
+                applyCorrect();
+            } else {
+                applyWrong();
+            }
+        }
+
+        function attachEvents() {
+            DOM.start.characters.forEach(card => {
+                card.addEventListener("click", () => {
+                    selectCharacter(card);
+                });
+                card.addEventListener("keydown", event => {
+                    if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        selectCharacter(card);
+                    }
+                });
+            });
+
+            DOM.start.rangeMin.addEventListener("input", () => {
+                validateRange();
+            });
+            DOM.start.rangeMax.addEventListener("input", () => {
+                validateRange();
+            });
+
+            DOM.start.languageSelect.addEventListener("change", event => {
+                gameState.language = event.target.value;
+                updateLanguageStrings();
+            });
+
+            DOM.start.startButton.addEventListener("click", () => {
+                if (!audio.unlocked) {
+                    initAudio();
+                }
+                startGame();
+            });
+
+            DOM.game.soundToggle.addEventListener("click", () => {
+                gameState.soundEnabled = !gameState.soundEnabled;
+                DOM.game.soundToggle.textContent = gameState.soundEnabled ? "🔊" : "🔇";
+                DOM.game.soundToggle.setAttribute("aria-pressed", gameState.soundEnabled ? "true" : "false");
+                DOM.game.soundToggle.setAttribute(
+                    "aria-label",
+                    gameState.soundEnabled
+                        ? translations[gameState.language].soundOff
+                        : translations[gameState.language].soundOn
+                );
+            });
+
+            DOM.game.answerForm.addEventListener("submit", handleAnswer);
+
+            DOM.win.playAgain.addEventListener("click", () => {
+                showStartScreen();
+            });
+
+            document.body.addEventListener("pointerdown", () => {
+                if (!audio.unlocked) {
+                    initAudio();
+                }
+            }, { once: true });
+        }
+
+        function init() {
+            attachEvents();
+            resetState();
+            selectCharacter(DOM.start.characters[0]);
+            DOM.start.languageSelect.value = gameState.language;
+            updateLanguageStrings();
+            validateRange();
+            window.__gameDebug = Object.freeze({
+                getState: () => ({ ...gameState }),
+                forceWin: () => {
+                    gameState.position = gameState.pathLength;
+                    showWinScreen();
+                }
+            });
+        }
+
+        init();
+    })();
+    </script>
+</body>
+</html>
