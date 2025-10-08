@@ -709,6 +709,7 @@
         const SCOREBOARD_LIMIT = 10;
         const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // one year in seconds
         const MAX_ANSWER_LENGTH = 4;
+        const PLAYER_NAME_COOKIE = "mpaPlayerName";
 
         const translations = {
             en: {
@@ -1016,6 +1017,33 @@
             }
         }
 
+        function loadPlayerNameFromCookie() {
+            const cookie = document.cookie
+                .split("; ")
+                .find(row => row.startsWith(`${PLAYER_NAME_COOKIE}=`));
+            if (!cookie) {
+                return "";
+            }
+            const [, value] = cookie.split("=");
+            try {
+                return decodeURIComponent(value || "").slice(0, 20);
+            } catch (err) {
+                console.warn("Player name cookie parse failed", err);
+                return "";
+            }
+        }
+
+        function savePlayerNameToCookie(name) {
+            try {
+                const sanitized = (name || "").trim().slice(0, 20);
+                const encoded = encodeURIComponent(sanitized);
+                const expires = new Date(Date.now() + COOKIE_MAX_AGE * 1000).toUTCString();
+                document.cookie = `${PLAYER_NAME_COOKIE}=${encoded}; expires=${expires}; max-age=${COOKIE_MAX_AGE}; path=/; SameSite=Lax`;
+            } catch (err) {
+                console.warn("Player name cookie save failed", err);
+            }
+        }
+
         function renderScoreboard(entries = loadScoreboard()) {
             const t = translations[gameState.language];
             const list = DOM.win.scoreboardList;
@@ -1296,6 +1324,7 @@
         function startGame() {
             gameState.playerName = DOM.start.playerName.value.trim().slice(0, 20);
             DOM.start.playerName.value = gameState.playerName;
+            savePlayerNameToCookie(gameState.playerName);
             gameState.rangeMin = parseInt(DOM.start.rangeMin.value, 10);
             gameState.rangeMax = parseInt(DOM.start.rangeMax.value, 10);
             gameState.score = 0;
@@ -1337,6 +1366,9 @@
             DOM.screens.game.classList.add("hidden");
             DOM.screens.start.classList.remove("hidden");
             updateLanguageStrings();
+            const storedName = gameState.playerName || loadPlayerNameFromCookie();
+            gameState.playerName = storedName;
+            DOM.start.playerName.value = storedName;
             validateRange();
         }
 
@@ -1570,6 +1602,9 @@
             selectCharacter(DOM.start.characters[0]);
             DOM.start.languageSelect.value = gameState.language;
             updateLanguageStrings();
+            const storedName = loadPlayerNameFromCookie();
+            gameState.playerName = storedName;
+            DOM.start.playerName.value = storedName;
             validateRange();
             window.__gameDebug = Object.freeze({
                 getState: () => ({ ...gameState }),
