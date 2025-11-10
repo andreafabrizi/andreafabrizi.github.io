@@ -1054,6 +1054,17 @@
             }
         }
 
+        function ensureAudioReady() {
+            if (!audio.unlocked) {
+                initAudio();
+            }
+            if (audio.context && audio.context.state === "suspended") {
+                audio.context.resume().catch(() => {
+                    /* ignore resume rejection */
+                });
+            }
+        }
+
         const gameState = {
             language: "it",
             playerName: "",
@@ -1493,6 +1504,7 @@
             if (!gameState.soundEnabled) {
                 return;
             }
+            ensureAudioReady();
             if (!audio.context) {
                 return;
             }
@@ -1680,9 +1692,7 @@
 
             DOM.start.startButton.addEventListener("click", () => {
                 ensureFullscreen();
-                if (!audio.unlocked) {
-                    initAudio();
-                }
+                ensureAudioReady();
                 startGame();
             });
 
@@ -1709,11 +1719,13 @@
 
             document.body.addEventListener("pointerdown", () => {
                 ensureFullscreen();
-                if (!audio.unlocked) {
-                    initAudio();
-                }
+                ensureAudioReady();
             }, { once: true });
         }
+
+        window.addEventListener("load", () => {
+            ensureFullscreen();
+        });
 
         function init() {
             attachEvents();
