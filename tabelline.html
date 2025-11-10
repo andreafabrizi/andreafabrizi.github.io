@@ -1021,6 +1021,39 @@
             unlocked: false
         };
 
+        function isDocumentFullscreen() {
+            return Boolean(
+                document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement
+            );
+        }
+
+        function ensureFullscreen() {
+            if (isDocumentFullscreen()) {
+                return;
+            }
+            const docEl = document.documentElement;
+            const request =
+                docEl.requestFullscreen ||
+                docEl.webkitRequestFullscreen ||
+                docEl.mozRequestFullScreen ||
+                docEl.msRequestFullscreen;
+            if (typeof request === "function") {
+                try {
+                    const result = request.call(docEl);
+                    if (result && typeof result.catch === "function") {
+                        result.catch(() => {
+                            /* ignore - user may decline fullscreen */
+                        });
+                    }
+                } catch (err) {
+                    console.warn("Fullscreen request failed", err);
+                }
+            }
+        }
+
         const gameState = {
             language: "it",
             playerName: "",
@@ -1646,6 +1679,7 @@
             });
 
             DOM.start.startButton.addEventListener("click", () => {
+                ensureFullscreen();
                 if (!audio.unlocked) {
                     initAudio();
                 }
@@ -1674,6 +1708,7 @@
             });
 
             document.body.addEventListener("pointerdown", () => {
+                ensureFullscreen();
                 if (!audio.unlocked) {
                     initAudio();
                 }
